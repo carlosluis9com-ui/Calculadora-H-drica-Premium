@@ -227,45 +227,65 @@ function calcularMultifamiliar() {
     const navExacto = document.getElementById('multi-exacto');
     if (navExacto.classList.contains('active')) {
         // MÉT. EXACTO
-        let lotes = getVal('me_lotes');
+        let parcelas = getVal('me_parcelas') || 1;
+        let area = getVal('me_area');
+        let edificios = getVal('me_edificios');
         let pisos = getVal('me_pisos');
         let aptos = getVal('me_aptos');
         let habs = getVal('me_habs');
 
-        if (lotes == 0 || pisos == 0 || aptos == 0) {
-            alert("Rellene Lotes, Pisos y Aptos para Método Exacto."); return;
+        if (edificios == 0 || pisos == 0 || aptos == 0) {
+            alert("Rellene Edificios, Pisos y Aptos para el Método Exacto."); return;
         }
 
-        let totalAptos = lotes * pisos * aptos;
         let dotUnit = getDotacionTabla8(habs);
-        let consumo = totalAptos * dotUnit;
+        let consumoCentral = dotUnit * aptos * pisos * edificios * parcelas;
 
-        total = consumo + riego;
-        titulo = `Multifamiliar Exacto - ${totalAptos} Aptos Totales`;
-        detalle = `<span style="color:var(--accent-cyan); font-weight:bold;">MÉTODO EXACTO</span><br><br>
-                   🔹 Total Apartamentos: <span class="res-highlight">${totalAptos}</span><br>
-                   🔹 Dotación por Apto: <span class="res-highlight">${formatNumber(dotUnit)} L/d</span><br>
-                   🔹 Consumo (Apto x L/d): <span class="res-highlight">${formatNumber(consumo)} L/d</span><br>
-                   🔹 Riego Extra: <span class="res-highlight">${formatNumber(riego)} L/d</span>`;
+        // Jardines Automáticos por Parcela al 10%
+        let areaVerde = area * 0.10;
+        let riegoParcela = areaVerde * 2;
+        let riegoAutom = riegoParcela * parcelas;
+
+        total = consumoCentral + riegoAutom + extraValue;
+        titulo = `Multifamiliar Exacto - ${parcelas} parcelas de ${area} m²`;
+        detalle = `
+            <span style="color:var(--accent-cyan); font-weight:bold;">EDIFICACIONES:</span><br><br>
+            🔹 ${formatNumber(dotUnit)} L/d x ${aptos} apto. x ${pisos} pisos x ${edificios} edificios x ${parcelas} parcelas = <span class="res-highlight" style="background-color: var(--accent-cyan); color: #000; padding: 2px 6px; border-radius: 4px;">${formatNumber(consumoCentral)} L/d</span><br>
+            <hr style="border-color: rgba(255,255,255,0.1)">
+            <span style="color:var(--accent-cyan); font-weight:bold;">JARDINES (10% de Parcela):</span><br><br>
+            🔹 ${formatNumber(area)} m² x 0.10 = ${formatNumber(areaVerde)} m² x 2 L/d/m² = ${formatNumber(riegoParcela)} L/d<br>
+            🔹 ${formatNumber(riegoParcela)} L/d x ${parcelas} parcelas = <span class="res-highlight" style="background-color: #00ff73; color: #000; padding: 2px 6px; border-radius: 4px;">${formatNumber(riegoAutom)} L/d</span>`;
+
+        if (porcExtra > 0) {
+            detalle += `<br><br>🔹 <i>*Riego Manual Adicional (Global): +${porcExtra}% = <span class="res-highlight">${formatNumber(extraValue)} L/d</span></i>`;
+        }
 
     } else {
         // MÉT. ESTIMADO (K)
         let areaParcela = getVal('ms_area_parcela');
         let areaConst = getVal('ms_area_const');
+        let cantParcelas = getVal('ms_cant_parcelas') || 1;
 
         if (areaParcela > 0 && areaConst > 0) {
             let porcentaje = (areaConst / areaParcela) * 100;
             let factorK = porcentaje / 10;
-            let consumo = areaParcela * factorK;
+            let consumoUnidad = areaParcela * factorK;
+            let consumoGlobal = consumoUnidad * cantParcelas;
 
-            total = consumo + riego;
-            titulo = `Multifamiliar Estimado - Parcela ${areaParcela} m²`;
+            let riegoArea = areaParcela * (porcExtra / 100);
+            let riegoUnidad = riegoArea * 2;
+            let riegoGlobal = riegoUnidad * cantParcelas;
+
+            total = consumoGlobal + riegoGlobal;
+
+            titulo = `Multifamiliar Est. - ${cantParcelas} Parcela(s) de ${areaParcela} m²`;
             detalle = `<span style="color:var(--accent-purple); font-weight:bold;">MÉTODO ESTIMADO</span><br><br>
                 1. % Construcción = (${areaConst} / ${areaParcela}) × 100 = <span class="res-highlight">${formatNumber(porcentaje)}%</span><br>
                 2. Factor K = ${formatNumber(porcentaje)} / 10 = <span class="res-highlight">${formatNumber(factorK)} L/d/m²</span><br>
-                3. Dotación Inmueble = ${areaParcela} m² × ${formatNumber(factorK)} = <span class="res-highlight">${formatNumber(consumo)} L/d</span><br>
+                3. Dotación (1) Inmueble = <span class="res-highlight">${formatNumber(consumoUnidad)} L/d</span><br>
+                4. Total Inmuebles (${cantParcelas} parcelas) = <span class="res-highlight">${formatNumber(consumoGlobal)} L/d</span><br>
                 <hr style="border-color: rgba(255,255,255,0.1)">
-                🔹 Riego Jardines Extra: <span class="res-highlight">${formatNumber(riego)} L/d</span>`;
+                🔹 Riego Jardines Extra (${porcExtra}% x ${cantParcelas}): <span class="res-highlight">${formatNumber(riegoGlobal)} L/d</span>`;
         } else {
             alert("Error: Área de Parcela y Construcción deben ser mayor a 0");
             return;
@@ -278,24 +298,41 @@ function calcularBifamiliar() {
     let area = getVal('bi_area');
     let habsAlta = getVal('bi_habs');
     let cantidad = getVal('bi_cantidad');
-    let jardinExtra = getVal('bi_jardin') * 2;
 
     if (area <= 0) { alert("Area de la Parcela en PB es Obligatoria"); return; }
+    if (cantidad <= 0) { alert("La cantidad de bifamiliares debe ser al menos 1"); return; }
 
+    // 1. Cálculo PB (Como Unifamiliar)
     let dotPB = getDotacionTabla7(area);
+    let totalPB = dotPB * cantidad;
+
+    // 2. Cálculo PA (Como Multifamiliar)
     let dotPA = getDotacionTabla8(habsAlta);
-    let unitario = dotPB + dotPA;
-    let total = (unitario * cantidad) + jardinExtra;
+    let totalPA = dotPA * cantidad;
+
+    // 3. Jardines (Porcentaje Manual)
+    let porcExtra = getVal('bi_jardin') || 0;
+    let areaVerde = area * (porcExtra / 100);
+    let riegoParcela = areaVerde * 2;
+    let totalJardin = riegoParcela * cantidad;
+
+    let total = totalPB + totalPA + totalJardin;
 
     let detalle = `
-        <span style="color:var(--accent-cyan); font-weight:bold;">POR UNIDAD BIFAMILIAR:</span><br><br>
-        🔹 PB (Unifam. ${area}m²): <span class="res-highlight">${formatNumber(dotPB)} L/d</span><br>
-        🔹 PA (Multifam. ${habsAlta}hab): <span class="res-highlight">${formatNumber(dotPA)} L/d</span><br>
-        🔹 Total 1 Unidad Bifamiliar: <span class="res-highlight">${formatNumber(unitario)} L/d</span><br>
+        <span style="color:var(--accent-cyan); font-weight:bold;">1. PLANTA BAJA (Art.109 c.1):</span><br><br>
+        🔹 Para ${formatNumber(area)} m² le corresponde ${formatNumber(dotPB)} L/d<br>
+        🔹 ${cantidad} parcelas x ${formatNumber(dotPB)} L/d = <span class="res-highlight" style="background-color: var(--accent-cyan); color: #000; padding: 2px 6px; border-radius: 4px;">${formatNumber(totalPB)} L/d</span><br>
         <hr style="border-color: rgba(255,255,255,0.1)">
-        🔹 Cantidad Unidades: <span class="res-highlight">${cantidad}</span><br>
-        🔹 Riego Extra: <span class="res-highlight">${formatNumber(jardinExtra)} L/d</span>
+        <span style="color:var(--accent-cyan); font-weight:bold;">2. PLANTA ALTA (Art.109 c.2):</span><br><br>
+        🔹 Para 1 Apart. de ${habsAlta} habs. le corresponde ${formatNumber(dotPA)} L/d<br>
+        🔹 ${cantidad} aparts x ${formatNumber(dotPA)} L/d = <span class="res-highlight" style="background-color: var(--accent-cyan); color: #000; padding: 2px 6px; border-radius: 4px;">${formatNumber(totalPA)} L/d</span><br>
+        <hr style="border-color: rgba(255,255,255,0.1)">
+        <span style="color:var(--accent-cyan); font-weight:bold;">3. JARDINES (${porcExtra}% PB):</span><br><br>
+        🔹 ${cantidad} parcelas de ${formatNumber(area)} m²<br>
+        🔹 ${formatNumber(area)} m² x ${formatNumber(porcExtra / 100)} = ${formatNumber(areaVerde)} m² x 2 L/d/m² = ${formatNumber(riegoParcela)} L/d<br>
+        🔹 ${formatNumber(riegoParcela)} L/d x ${cantidad} parcelas = <span class="res-highlight" style="background-color: #00ff73; color: #000; padding: 2px 6px; border-radius: 4px;">${formatNumber(totalJardin)} L/d</span>
     `;
+
     let titulo = `Bifamiliar - ${cantidad} Unidad(es)`;
     showResult(total, detalle, titulo);
 }
@@ -320,7 +357,8 @@ function calcularOtros() {
 
     let cantModulo = getVal('otros_val1');
     let cantEdificios = getVal('otros_cant') || 1;
-    let riego = getVal('otros_jardin') * 2;
+    let areaParcela = getVal('otros_area');
+    let porcExtra = getVal('otros_jardin');
 
     if (cantModulo <= 0) { alert("Introduzca la cantidad (número de unidades) mayor a 0."); return; }
 
@@ -331,6 +369,14 @@ function calcularOtros() {
     let desc = `${descTextoCompleta} × ${cantModulo}`;
 
     let consumoTotalEdificios = consumoUnidad * cantEdificios;
+
+    // Riego modificado a Porcentaje x Area Parcela x 2 L/d x Cantidad de Inmuebles (opcional si son separados, pero tomaremos area global)
+    let riego = 0;
+    if (areaParcela > 0 && porcExtra > 0) {
+        let areaRegar = areaParcela * (porcExtra / 100);
+        riego = (areaRegar * 2) * cantEdificios;
+    }
+
     let total = consumoTotalEdificios + riego;
 
     let descTipo = descTextoCompleta.split('(')[0].trim();
@@ -342,7 +388,7 @@ function calcularOtros() {
         🔹 Cantidad Inmuebles: <span class="res-highlight">${cantEdificios}</span><br>
         🔹 Sub-total (Sin riego): <span class="res-highlight">${formatNumber(consumoTotalEdificios)} L/d</span><br>
         <hr style="border-color: rgba(255,255,255,0.1)">
-        🔹 Riego Total: <span class="res-highlight">${formatNumber(riego)} L/d</span>`, titulo);
+        🔹 Riego Jardines (${porcExtra}%): <span class="res-highlight">${formatNumber(riego)} L/d</span>`, titulo);
 }
 
 // ------------------------

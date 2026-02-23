@@ -152,21 +152,31 @@
                 <div class="card glass-panel-inner mt-3">
                     <div class="form-group row">
                         <div class="col">
-                            <label>1. N° de Edificios (Lotes):</label>
-                            <input type="number" id="me_lotes" placeholder="Ej: 2">
+                            <label>1. N° de Parcelas:</label>
+                            <input type="number" id="me_parcelas" value="1" placeholder="Ej: 6">
                         </div>
                         <div class="col">
-                            <label>2. Pisos por Edificio:</label>
-                            <input type="number" id="me_pisos" placeholder="Ej: 10">
+                            <label>2. Área de Parcela (m²):</label>
+                            <input type="number" id="me_area" placeholder="Ej: 3800">
                         </div>
                     </div>
                     <div class="form-group row mt-3">
                         <div class="col">
-                            <label>3. Aptos. por Piso:</label>
-                            <input type="number" id="me_aptos" placeholder="Ej: 4">
+                            <label>3. Edificios por Parcela:</label>
+                            <input type="number" id="me_edificios" placeholder="Ej: 4">
                         </div>
                         <div class="col">
-                            <label>4. Habs. por Apartamento:</label>
+                            <label>4. Pisos por Edificio:</label>
+                            <input type="number" id="me_pisos" placeholder="Ej: 5">
+                        </div>
+                    </div>
+                    <div class="form-group row mt-3">
+                        <div class="col">
+                            <label>5. Aptos. por Piso:</label>
+                            <input type="number" id="me_aptos" placeholder="Ej: 5">
+                        </div>
+                        <div class="col">
+                            <label>6. Habs. por Apto:</label>
                             <input type="number" id="me_habs" placeholder="Ej: 3">
                         </div>
                     </div>
@@ -182,21 +192,29 @@
                 </div>
 
                 <div class="card glass-panel-inner mt-3">
-                    <div class="form-group">
-                        <label>1. Área Total de la Parcela (m²):</label>
-                        <input type="number" id="ms_area_parcela" placeholder="Área del terreno (Ej: 4000)">
+                    <div class="form-group row">
+                        <div class="col">
+                            <label>1. Área Total de la Parcela (m²):</label>
+                            <input type="number" id="ms_area_parcela" placeholder="Área del terreno (Ej: 4000)">
+                        </div>
+                        <div class="col">
+                            <label>2. Área Bruta de Construcción (m²):</label>
+                            <input type="number" id="ms_area_const"
+                                placeholder="Construcción total cubierta (Ej: 1700)">
+                        </div>
                     </div>
                     <div class="form-group mt-3">
-                        <label>2. Área Bruta de Construcción (m²):</label>
-                        <input type="number" id="ms_area_const" placeholder="Construcción total cubierta (Ej: 1700)">
+                        <label>3. Cantidad de Parcelas (Lotes Iguales):</label>
+                        <input type="number" id="ms_cant_parcelas" value="1" placeholder="Multiplicador (Ej: 8)">
                     </div>
                 </div>
             </div>
 
             <div class="card glass-panel-inner mt-4">
-                <label>🌳 Área Verde / Jardines Extras (m²):</label>
-                <input type="number" id="multi_jardin" placeholder="Dejar vacío o 0 si no hay">
-                <div class="info-text mt-2">Corresponde a la dotación de riego (2 L/dia/m²).</div>
+                <label>🌳 Porcentaje de Área Verde / Jardines (%):</label>
+                <input type="number" id="multi_jardin" placeholder="Ej: 10">
+                <div class="info-text mt-2">Corresponde a la dotación de riego (2 L/dia/m²) en base al área de parcela.
+                </div>
             </div>
 
             <button class="btn-primary mt-4" onclick="calcularMultifamiliar()">Calcular Edificación</button>
@@ -223,8 +241,8 @@
                         <input type="number" id="bi_cantidad" value="1" placeholder="N° de Unidades (Ej: 10)">
                     </div>
                     <div class="col">
-                        <label>🌳 Jardín Extra (m²):</label>
-                        <input type="number" id="bi_jardin" placeholder="Opcional (Ej: 50)">
+                        <label>🌳 Porcentaje de Jardín (%):</label>
+                        <input type="number" id="bi_jardin" placeholder="Ej: 10">
                     </div>
                 </div>
             </div>
@@ -366,13 +384,19 @@
                         <input type="number" id="otros_val1" placeholder="Alumnos / Camas / m² / Personas">
                     </div>
                     <div class="col">
-                        <label>Jardines Integrados (m²):</label>
-                        <input type="number" id="otros_jardin" placeholder="Área Verde a regar (Ej: 15)">
+                        <label>Área Total de Parcela (m²):</label>
+                        <input type="number" id="otros_area" placeholder="P/Jardines (Ej: 1000)">
                     </div>
                 </div>
-                <div class="form-group mt-3">
-                    <label>Cantidad de Edificaciones de este Tipo:</label>
-                    <input type="number" id="otros_cant" value="1">
+                <div class="form-group row mt-3">
+                    <div class="col">
+                        <label>Cantidad de Edificaciones de este Tipo:</label>
+                        <input type="number" id="otros_cant" value="1">
+                    </div>
+                    <div class="col">
+                        <label>🌳 Porcentaje de Jardines (%):</label>
+                        <input type="number" id="otros_jardin" placeholder="Ej: 15">
+                    </div>
                 </div>
             </div>
 
