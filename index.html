@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Dotaciones & Proyecciones</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body>
+
+    <!-- Fluid Background -->
+    <div class="bg-shape bg-shape-1"></div>
+    <div class="bg-shape bg-shape-2"></div>
+    <div class="bg-shape bg-shape-3"></div>
+
+    <div class="container glass-panel">
+        <header>
+            <h1>💧 Calculadora Hídrica Premium</h1>
+            <p>Proyección Poblacional & Dotaciones (Gaceta 4044)</p>
+        </header>
+
+        <div class="nav-tabs">
+            <div class="nav-item active" onclick="openTab('proyeccion')">📈 Proyecciones</div>
+            <div class="nav-item" onclick="openTab('percapita')">👥 Per Cápita</div>
+            <div class="nav-item" onclick="openTab('multifamiliar')">🏢 Multifamiliar</div>
+            <div class="nav-item" onclick="openTab('bifamiliar')">🏡 Bifamiliar</div>
+            <div class="nav-item" onclick="openTab('unifamiliar')">🏠 Unifamiliar</div>
+            <div class="nav-item" onclick="openTab('otros')">🏥 Otros Usos</div>
+            <div class="nav-item" onclick="openTab('reporte')">📋 Reporte</div>
+        </div>
+
+        <!-- TAB 1: PROYECCIONES (INDEPENDIENTE) -->
+        <div id="proyeccion" class="section active fade-in">
+            <h2>📈 Proyección de Población</h2>
+            <div class="info-text">Calcula el crecimiento poblacional proyectado con tres métodos matemáticos y
+                gráficos. Este cálculo es completamente independiente a las otras pestañas de Dotaciones.</div>
+
+            <div class="card glass-panel-inner mt-4">
+                <div class="form-group row">
+                    <div class="col">
+                        <label>Año Primer Censo</label>
+                        <input type="number" id="t1" placeholder="Ej: 2005">
+                    </div>
+                    <div class="col">
+                        <label>Población Primer Censo</label>
+                        <input type="number" id="p1" placeholder="Ej: 5000">
+                    </div>
+                </div>
+
+                <div class="form-group row mt-3">
+                    <div class="col">
+                        <label>Año Último Censo</label>
+                        <input type="number" id="t2" placeholder="Ej: 2015">
+                    </div>
+                    <div class="col">
+                        <label>Población Último Censo</label>
+                        <input type="number" id="p2" placeholder="Ej: 8000">
+                    </div>
+                </div>
+
+                <div class="form-group row mt-3">
+                    <div class="col">
+                        <label>Año a Proyectar</label>
+                        <input type="number" id="ano-proyectar" placeholder="Ej: 2040">
+                    </div>
+                    <div class="col">
+                        <label>Método de Enfoque</label>
+                        <select id="metodo-proyeccion">
+                            <option value="geometrico">Geométrico (Recomendado)</option>
+                            <option value="aritmetico">Aritmético</option>
+                            <option value="logaritmico">Exponencial / Logarítmico</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button class="btn-primary mt-4" onclick="calcularProyeccion()">Calcular Proyecciones y
+                    Graficar</button>
+            </div>
+
+            <div id="resultados-proyeccion" class="card glass-panel-inner mt-4 fade-in" style="display: none;">
+                <h3>📊 Resultados</h3>
+                <div class="results-grid">
+                    <div class="result-box" id="box-aritmetico">
+                        <h4>Aritmético</h4>
+                        <div class="value" id="res-aritmetico">--</div>
+                        <div class="sub-value">hab.</div>
+                    </div>
+                    <div class="result-box glow" id="box-geometrico">
+                        <h4>Geométrico</h4>
+                        <div class="value" id="res-geometrico">--</div>
+                        <div class="sub-value">hab.</div>
+                    </div>
+                    <div class="result-box" id="box-logaritmico">
+                        <h4>Exp / Log</h4>
+                        <div class="value" id="res-exponencial">--</div>
+                        <div class="sub-value">hab.</div>
+                    </div>
+                </div>
+
+                <div class="chart-container mt-4">
+                    <canvas id="projectionChart" width="400" height="200"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB EXTRA: PER CÁPITA -->
+        <div id="percapita" class="section fade-in" style="display: none;">
+            <h2>👥 Método Per Cápita</h2>
+            <div class="info-text">Cálculo basado en la población proyectada total de una zona.</div>
+
+            <div class="card glass-panel-inner mt-4">
+                <div class="form-group row">
+                    <div class="col">
+                        <label>Población Base (hab)</label>
+                        <input type="number" id="poblacion-base" placeholder="Ej: 5000">
+                    </div>
+                    <div class="col">
+                        <label>Dotación (Lts/hab/día)</label>
+                        <input type="number" id="dotacion-per-capita" placeholder="Ej: 200">
+                        <small style="margin-top: 5px;"><a href="#" id="btn-auto-norma"
+                                style="color:var(--accent-cyan); text-decoration:none; font-weight: 600;">🪄
+                                Auto-asignar según Norma</a></small>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-primary mt-4" onclick="calcularPerCapita()">Calcular Demanda Per Cápita</button>
+        </div>
+
+        <!-- TAB 2: MULTIFAMILIAR (GACETA 4044) -->
+        <div id="multifamiliar" class="section fade-in" style="display: none;">
+            <h2>🏢 Viviendas Multifamiliares (Edificios)</h2>
+            <div class="info-text">Artículo 109, Literales B y C. Gaceta Oficial 4044.</div>
+
+            <div class="sub-tabs mt-4">
+                <button class="sub-btn active" onclick="openSubTab('multi-exacto', this)">✅ Método Exacto
+                    (Habitaciones)</button>
+                <button class="sub-btn" onclick="openSubTab('multi-estimado', this)">📐 Método Estimado (Factor
+                    K)</button>
+            </div>
+
+            <div id="multi-exacto" class="sub-content active fade-in">
+                <div class="info-text accent-bg">Usar cuando se conoce la distribución arquitectónica (N° de
+                    habitaciones) mediante la Tabla 8.</div>
+
+                <div class="card glass-panel-inner mt-3">
+                    <div class="form-group row">
+                        <div class="col">
+                            <label>1. N° de Edificios (Lotes):</label>
+                            <input type="number" id="me_lotes" placeholder="Ej: 2">
+                        </div>
+                        <div class="col">
+                            <label>2. Pisos por Edificio:</label>
+                            <input type="number" id="me_pisos" placeholder="Ej: 10">
+                        </div>
+                    </div>
+                    <div class="form-group row mt-3">
+                        <div class="col">
+                            <label>3. Aptos. por Piso:</label>
+                            <input type="number" id="me_aptos" placeholder="Ej: 4">
+                        </div>
+                        <div class="col">
+                            <label>4. Habs. por Apartamento:</label>
+                            <input type="number" id="me_habs" placeholder="Ej: 3">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="multi-estimado" class="sub-content fade-in" style="display: none;">
+                <div class="info-text accent-bg">
+                    <strong>Factor K para Macroproyectos:</strong><br>
+                    1. (Construcción / Parcela) × 100 = <strong>% Const.</strong><br>
+                    2. (% Const. / 10) = <strong>Factor K</strong><br>
+                    3. Parcela × Factor K = <strong>Dotación</strong>
+                </div>
+
+                <div class="card glass-panel-inner mt-3">
+                    <div class="form-group">
+                        <label>1. Área Total de la Parcela (m²):</label>
+                        <input type="number" id="ms_area_parcela" placeholder="Área del terreno (Ej: 4000)">
+                    </div>
+                    <div class="form-group mt-3">
+                        <label>2. Área Bruta de Construcción (m²):</label>
+                        <input type="number" id="ms_area_const" placeholder="Construcción total cubierta (Ej: 1700)">
+                    </div>
+                </div>
+            </div>
+
+            <div class="card glass-panel-inner mt-4">
+                <label>🌳 Área Verde / Jardines Extras (m²):</label>
+                <input type="number" id="multi_jardin" placeholder="Dejar vacío o 0 si no hay">
+                <div class="info-text mt-2">Corresponde a la dotación de riego (2 L/dia/m²).</div>
+            </div>
+
+            <button class="btn-primary mt-4" onclick="calcularMultifamiliar()">Calcular Edificación</button>
+        </div>
+
+        <!-- TAB 3: BIFAMILIAR -->
+        <div id="bifamiliar" class="section fade-in" style="display: none;">
+            <h2>🏡 Viviendas Bifamiliares</h2>
+            <div class="info-text">Artículo 109. Literales A y B: "Para la planta baja se aplica el área de parcela.
+                Para la superior, por número de cuartos".</div>
+
+            <div class="card glass-panel-inner mt-4">
+                <div class="form-group">
+                    <label>1. Área Total de la Parcela (m²) [PB]:</label>
+                    <input type="number" id="bi_area" placeholder="Terreno total (Ej: 300)">
+                </div>
+                <div class="form-group mt-3">
+                    <label>2. Habs. en Planta Alta [PA]:</label>
+                    <input type="number" id="bi_habs" placeholder="N° Dormitorios (Ej: 4)">
+                </div>
+                <div class="form-group row mt-3">
+                    <div class="col">
+                        <label>3. Cantidad de Bifamiliares:</label>
+                        <input type="number" id="bi_cantidad" value="1" placeholder="N° de Unidades (Ej: 10)">
+                    </div>
+                    <div class="col">
+                        <label>🌳 Jardín Extra (m²):</label>
+                        <input type="number" id="bi_jardin" placeholder="Opcional (Ej: 50)">
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn-primary mt-4" onclick="calcularBifamiliar()">Calcular Vivienda Bifamiliar</button>
+        </div>
+
+        <!-- TAB 4: UNIFAMILIAR -->
+        <div id="unifamiliar" class="section fade-in" style="display: none;">
+            <h2>🏠 Vivienda Unifamiliar</h2>
+            <div class="info-text">Artículo 109, Literal A. Rango escalonado mediante Tabla 7. (Ya incluye áreas
+                verdes).</div>
+
+            <div class="card glass-panel-inner mt-4">
+                <div class="form-group">
+                    <label>1. Área Total de la Parcela (m²):</label>
+                    <input type="number" id="uni_area" placeholder="Medida del Terreno (Ej: 250)">
+                </div>
+                <div class="form-group mt-3">
+                    <label>2. Número de Parcelas Iguales (Casa):</label>
+                    <input type="number" id="uni_cant" value="1">
+                </div>
+            </div>
+
+            <button class="btn-primary mt-4" onclick="calcularUnifamiliar()">Calcular Conjunto / Casas</button>
+        </div>
+
+        <!-- TAB 5: OTROS USOS -->
+        <div id="otros" class="section fade-in" style="display: none;">
+            <h2>🏥 Servicios, Educación y Comercio</h2>
+            <div class="info-text">Artículo 110. Dotaciones específicas por naturaleza de ocupación.</div>
+
+            <div class="card glass-panel-inner mt-4">
+                <div class="form-group">
+                    <label>Seleccione el Tipo (Destino):</label>
+                    <select id="otros_tipo">
+                        <optgroup label="Art. 110 - Asistenciales">
+                            <option value="hosp_cama" data-dot="800" data-unit="Camas">Hospitalización (800 L/d/cama)
+                            </option>
+                            <option value="hosp_cons" data-dot="500" data-unit="Consultorios">Consulta Externa (500
+                                L/d/consl.)</option>
+                            <option value="dental" data-dot="1000" data-unit="Unidades Dent.">Clínicas Dentales (1000
+                                L/d/unidad)</option>
+                        </optgroup>
+                        <optgroup label="Art. 110 - Educacionales">
+                            <option value="edu_ext" data-dot="40" data-unit="Alumnos">Alumnado Externo (40 L/d/alum.)
+                            </option>
+                            <option value="edu_semi" data-dot="70" data-unit="Alumnos">Alumnado Semi-interno (70
+                                L/d/alum.)</option>
+                            <option value="edu_int" data-dot="200" data-unit="Alumnos">Alumnado Interno/Residente (200
+                                L/d/alum.)</option>
+                            <option value="edu_pers_res" data-dot="200" data-unit="Personas">Personal Residente (200
+                                L/d/pers.)</option>
+                            <option value="edu_pers_no_res" data-dot="50" data-unit="Personas">Personal No Residente (50
+                                L/d/pers.)</option>
+                        </optgroup>
+                        <optgroup label="Art. 110 - Instituciones Varias">
+                            <option value="cuarteles" data-dot="300" data-unit="Personas">Cuarteles (300 L/d/pers.)
+                            </option>
+                            <option value="carceles" data-dot="200" data-unit="Personas">Cárceles (200 L/d/pers.)
+                            </option>
+                            <option value="iglesias" data-dot="0.5" data-unit="m² Neto">Iglesias (0.5 L/d/m²)</option>
+                            <option value="oficinas_pub" data-dot="6" data-unit="m² Local">Oficinas Públicas/Grales (6
+                                L/d/m²)</option>
+                        </optgroup>
+                        <optgroup label="Art. 111 - Comercios y Anexos">
+                            <option value="deposito" data-dot="0.5" data-unit="m² Útil">Depósitos/Almacenes (0.5 L/d/m²
+                                por turno)</option>
+                            <option value="mercado" data-dot="15" data-unit="m² Ventas">Mercados (15 L/d/m²)</option>
+                            <option value="carniceria" data-dot="25" data-unit="m² Ventas">Carnicerías/Pescaderías (25
+                                L/d/m²)</option>
+                            <option value="super" data-dot="20" data-unit="m² Ventas">Supermercados/Tiendas (20 L/d/m²)
+                            </option>
+                            <option value="rest" data-dot="50" data-unit="m² Útil">Restaurantes (50 L/d/m²)</option>
+                            <option value="bar" data-dot="60" data-unit="m² Útil">Bares/Fuentes soda (60 L/d/m²)
+                            </option>
+                            <option value="cc" data-dot="10" data-unit="m² Bruto">Centros Comerciales (10 L/d/m² m.
+                                bruto)</option>
+                            <option value="hotel" data-dot="500" data-unit="Dormitorios">Hoteles/Moteles (500 L/d/dorm.)
+                            </option>
+                            <option value="pension" data-dot="350" data-unit="Dormitorios">Pensiones (350 L/d/dorm.)
+                            </option>
+                            <option value="hospedaje" data-dot="25" data-unit="m² Dormitorios">Hospedajes Generales (25
+                                L/d/m²)</option>
+                            <option value="lavanderia_ropa" data-dot="40" data-unit="Kg Ropa">Lavanderías Generales (40
+                                L/d/kilo)</option>
+                            <option value="lavanderia_seco" data-dot="30" data-unit="Kg Ropa">Lavanderías al Seco (30
+                                L/d/kilo)</option>
+                            <option value="estacionamiento" data-dot="2" data-unit="m² Cubierto">Estacionamientos
+                                Cubiertos (2 L/d/m²)</option>
+                            <option value="ob_bomba" data-dot="300" data-unit="Bombas">Bombas de Gasolina (300
+                                L/d/bomba)</option>
+                            <option value="lavado_man" data-dot="8000" data-unit="Equipos">Lavado Vehículos Manual (8000
+                                L/d/eq.)</option>
+                            <option value="lavado_auto" data-dot="12800" data-unit="Equipos">Lavado Vehículos Automático
+                                (12800 L/d/eq.)</option>
+                        </optgroup>
+                        <optgroup label="Art. 112 - Industrias">
+                            <option value="ind_trab" data-dot="80" data-unit="Trabajadores">Personal Industrial (80 L/d
+                                por trabajador/turno)</option>
+                        </optgroup>
+                        <optgroup label="Tabla 9 - Recreacional y Deportivo">
+                            <option value="cines" data-dot="3" data-unit="Asientos">Cines/Teatros/Auditorios (3
+                                L/d/asiento)</option>
+                            <option value="estadios" data-dot="3" data-unit="Espectadores">Estadios/Circos/Plaza Toros
+                                (3 L/d/espectador)</option>
+                            <option value="cabaret" data-dot="30" data-unit="m² Neto">Discotecas/Salas Baile (30 L/d/m²)
+                            </option>
+                            <option value="parque" data-dot="0.25" data-unit="m²">Parques (0.25 L/d/m²)</option>
+                            <option value="piscina_re" data-dot="10" data-unit="m² Proy. Horiz.">Piscinas
+                                c/recirculación (10 L/d/m²)</option>
+                            <option value="piscina_no" data-dot="25" data-unit="m² Proy. Horiz.">Piscinas
+                                s/recirculación (25 L/d/m²)</option>
+                            <option value="piscina_flujo" data-dot="125" data-unit="m² Proy. Horiz.">Piscinas c/flujo
+                                continuo (125 L/d/m²)</option>
+                            <option value="balneario" data-dot="50" data-unit="Usuarios">Balnearios (50 L/d/usuario)
+                            </option>
+                            <option value="gimnasio" data-dot="10" data-unit="m² Neto">Gimnasios (10 L/d/m²)</option>
+                            <option value="vestuarios" data-dot="30" data-unit="m² Proy. Horiz.">Vestuarios Piscina (30
+                                L/d/m² piscina)</option>
+                        </optgroup>
+                        <optgroup label="Tabla 10 - Animales (Granjas/Alojamientos)">
+                            <option value="lechero" data-dot="120" data-unit="Animales">Ganado Lechero (120 L/d/animal)
+                            </option>
+                            <option value="bovino" data-dot="40" data-unit="Animales">Bovinos / Equinos (40 L/d/animal)
+                            </option>
+                            <option value="ovino" data-dot="10" data-unit="Animales">Ovinos / Porc. Rejilla (10
+                                L/d/animal)</option>
+                            <option value="porcino_norm" data-dot="30" data-unit="Animales">Porcinos Normal (10-30
+                                L/d/animal)</option>
+                            <option value="aves" data-dot="20" data-unit="Cientos (Lotes de 100)">Aves (20 L/d por cada
+                                100 aves)</option>
+                        </optgroup>
+                    </select>
+                </div>
+                <div class="form-group row mt-3">
+                    <div class="col">
+                        <label id="label_otros_val1">Cantidad Módulo:</label>
+                        <input type="number" id="otros_val1" placeholder="Alumnos / Camas / m² / Personas">
+                    </div>
+                    <div class="col">
+                        <label>Jardines Integrados (m²):</label>
+                        <input type="number" id="otros_jardin" placeholder="Área Verde a regar (Ej: 15)">
+                    </div>
+                </div>
+                <div class="form-group mt-3">
+                    <label>Cantidad de Edificaciones de este Tipo:</label>
+                    <input type="number" id="otros_cant" value="1">
+                </div>
+            </div>
+
+            <button class="btn-primary mt-4" onclick="calcularOtros()">Calcular Dotación Especial</button>
+        </div>
+
+        <!-- TAB 6: REPORTE -->
+        <div id="reporte" class="section fade-in" style="display: none;">
+            <h2>📋 Reporte y Sumatoria Total</h2>
+            <div class="info-text">Resumen de todas las dotaciones calculadas. El sistema sumará automáticamente el Gran
+                Total para hallar el Caudal Medio del macro-proyecto completo.</div>
+
+            <div class="card glass-panel-inner mt-4">
+                <div style="overflow-x: auto;">
+                    <table style="width: 100%; border-collapse: collapse; color: white; min-width: 600px;">
+                        <thead>
+                            <tr style="border-bottom: 1px solid var(--glass-border);">
+                                <th style="padding: 12px; text-align: left;">Descripción de Edificación</th>
+                                <th style="padding: 12px; text-align: right;">Dotación (L/día)</th>
+                                <th style="padding: 12px; text-align: right;">Caudal Medio (L/s)</th>
+                                <th style="padding: 12px; text-align: center;">Acciones</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-reporte">
+                            <tr>
+                                <td colspan="4"
+                                    style="padding: 20px; text-align: center; color: var(--text-secondary);">Aún no hay
+                                    cálculos agregados al reporte. Utiliza las otras pestañas para calcular y agregar
+                                    demandadas.</td>
+                            </tr>
+                        </tbody>
+                        <tfoot>
+                            <tr
+                                style="border-top: 2px solid var(--accent-cyan); font-weight: bold; background: rgba(6, 182, 212, 0.1);">
+                                <td style="padding: 15px 12px; text-align: right; color: var(--accent-cyan);">GRAN TOTAL
+                                    (Caudal Medio):</td>
+                                <td id="gran-total-ld"
+                                    style="padding: 15px 12px; text-align: right; color: var(--accent-cyan); font-size: 1.2rem;">
+                                    0.00</td>
+                                <td id="gran-total-ls"
+                                    style="padding: 15px 12px; text-align: right; color: var(--accent-cyan); font-size: 1.2rem;">
+                                    0.00</td>
+                                <td></td>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+                <div class="mt-4" style="text-align: right; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button class="btn-primary" onclick="limpiarReporte()"
+                        style="width: auto; padding: 12px 20px; background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239,68,68,0.5); color: #fca5a5; box-shadow: none;">🗑️
+                        Limpiar Data</button>
+                    <button class="btn-primary" onclick="imprimirReporte()" style="width: auto; padding: 12px 25px;">🖨️
+                        Imprimir Resumen PDF</button>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- PANEL DE RESULTADOS FLOTANTE (Movido fuera del .container para evitar cortes) -->
+    <div id="resultado-panel" class="result-floating fade-in">
+        <div class="header-res">
+            <h3>💧 RESULTADO DE DEMANDA</h3>
+            <span class="close-res" onclick="cerrarResultados()">×</span>
+        </div>
+
+        <div class="res-body">
+            <div class="res-value" id="res_dia">0 L/día</div>
+            <div class="res-secondary" id="res_seg">0.00 L/s (Qm)</div>
+            <div class="res-breakdown" id="res_detalle">...</div>
+            <button id="btn-add-reporte" class="btn-primary mt-4" onclick="agregarAlReporte()">➕ Agregar al Reporte
+                General</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>
