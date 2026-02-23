@@ -3,9 +3,11 @@
 // ------------------------
 
 const AppState = {
-    reporteItems: []
+    reporteItems: [],
+    proyeccion: null
 };
 let tempResult = null;
+let tempProyeccion = null;
 
 // ------------------------
 // NAVEGACIÓN Y PESTAÑAS UI
@@ -27,7 +29,8 @@ function openTab(tabId) {
     void activeSec.offsetWidth;
     activeSec.classList.add('active');
 
-    event.currentTarget.classList.add('active');
+    const clickedBtn = document.querySelector(`.nav-item[onclick="openTab('${tabId}')"]`);
+    if (clickedBtn) clickedBtn.classList.add('active');
 
     // Ocultar modal flotante si está abierto
     cerrarResultados();
@@ -100,6 +103,24 @@ function calcularProyeccion() {
 
     // Gráfica
     dibujarGrafica(t1, p1, t2, p2, tf, pfAritmetico, pfGeometrico, pfExponencial, dt, dtFuturo, rAritmetico, rGeometrico, rExponencial);
+
+    // Preparar objeto para posible envío al Reporte
+    let nomMetodo = "Geométrico (Recomendado)";
+    let valorFinal = pfGeometrico;
+    if (seleccion === "aritmetico") {
+        nomMetodo = "Aritmético";
+        valorFinal = pfAritmetico;
+    } else if (seleccion === "logaritmico") {
+        nomMetodo = "Exponencial / Logarítmico";
+        valorFinal = pfExponencial;
+    }
+
+    tempProyeccion = {
+        censoBase: p1 + " hab. (Año " + t1 + ") ➔ " + p2 + " hab. (Año " + t2 + ")",
+        tf: tf,
+        metodo: nomMetodo,
+        resultado: formatNumber(valorFinal) + " hab."
+    };
 }
 
 function dibujarGrafica(t1, p1, t2, p2, tf, pfA, pfG, pfE, dt, dtFuturo, rA, rG, rE) {
@@ -149,6 +170,38 @@ function dibujarGrafica(t1, p1, t2, p2, tf, pfA, pfG, pfE, dt, dtFuturo, rA, rG,
     });
 }
 
+function agregarProyeccionAlReporte() {
+    if (!tempProyeccion) {
+        alert("Primero simule una proyección antes de agregarla al reporte.");
+        return;
+    }
+
+    // Capturar la imagen directamente del Canvas de Chart.js
+    const canvas = document.getElementById('projectionChart');
+    if (canvas) {
+        tempProyeccion.chartImg = canvas.toDataURL("image/png");
+    }
+
+    AppState.proyeccion = tempProyeccion;
+    actualizarTablaReporte();
+
+    const btn = document.getElementById('btn-add-proy-reporte');
+    if (btn) {
+        const bgOriginal = btn.style.background;
+        btn.innerHTML = "✅ ¡Añadido al Reporte!";
+        btn.style.background = "var(--success)";
+        setTimeout(() => {
+            btn.innerHTML = "➕ Agregar este Resumen al Reporte";
+            btn.style.background = bgOriginal;
+        }, 1500);
+    }
+}
+
+function eliminarProyeccionReporte() {
+    AppState.proyeccion = null;
+    actualizarTablaReporte();
+}
+
 
 // ------------------------
 // LÓGICAS COMUNES (GACETA)
@@ -162,7 +215,7 @@ function formatNumber(num) {
     return num.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 }
 
-function showResult(total, detalle, tituloResumen) {
+function showResult(total, detalle, tituloResumen, categoria, normativa) {
     const resPanel = document.getElementById('resultado-panel');
     resPanel.style.display = 'block';
     void resPanel.offsetWidth;
@@ -174,7 +227,9 @@ function showResult(total, detalle, tituloResumen) {
 
     tempResult = {
         titulo: tituloResumen || "Cálculo Genérico",
-        total: total
+        total: total,
+        categoria: categoria || "Otros",
+        normativa: normativa || "Cálculo estándar basado en dotación referencial"
     };
 }
 
@@ -257,6 +312,10 @@ function calcularMultifamiliar() {
             🔹 ${formatNumber(area)} m² x ${formatNumber(porcExtra / 100)} = ${formatNumber(areaVerde)} m² x 2 L/d/m² = ${formatNumber(riegoParcela)} L/d<br>
             🔹 ${formatNumber(riegoParcela)} L/d x ${parcelas} parcelas = <span class="res-highlight" style="background-color: #00ff73; color: #000; padding: 2px 6px; border-radius: 4px;">${formatNumber(riegoAutom)} L/d</span>`;
 
+        let normaTexto = `Gaceta 4044 (Art 109 c.2). Dotación basada en habitaciones (${habs} habs = ${dotUnit} L/d) para ${edificios} edificio(s) por ${parcelas} parcela(s)`;
+        showResult(total, detalle, titulo, "Multifamiliar", normaTexto);
+        return;
+
     } else {
         // MÉT. ESTIMADO (K)
         let porcExtra = getVal('multi_jardin') || 0;
@@ -284,12 +343,14 @@ function calcularMultifamiliar() {
                 4. Total Inmuebles (${cantParcelas} parcelas) = <span class="res-highlight">${formatNumber(consumoGlobal)} L/d</span><br>
                 <hr style="border-color: rgba(255,255,255,0.1)">
                 🔹 Riego Jardines Extra (${porcExtra}% x ${cantParcelas}): <span class="res-highlight">${formatNumber(riegoGlobal)} L/d</span>`;
+
+            let normaEst = `Estudio Preliminar Multi-Vivienda (Factor K: ${formatNumber(factorK)}) para ${cantParcelas} Parcela(s) de uso denso.`;
+            showResult(total, detalle, titulo, "Multifamiliar", normaEst);
         } else {
             alert("Error: Área de Parcela y Construcción deben ser mayor a 0");
             return;
         }
     }
-    showResult(total, detalle, titulo);
 }
 
 function calcularBifamiliar() {
@@ -332,7 +393,8 @@ function calcularBifamiliar() {
     `;
 
     let titulo = `Bifamiliar - ${cantidad} Unidad(es)`;
-    showResult(total, detalle, titulo);
+    let normaBifa = `Gaceta 4044 (Art 109.1 PB / Art 109.2 PA). Dotación Mixta para ${cantidad} Unidades Bifamiliares con PB de ${area}m2 y Apartamento Alto de ${habsAlta} habs.`;
+    showResult(total, detalle, titulo, "Bifamiliar", normaBifa);
 }
 
 function calcularUnifamiliar() {
@@ -343,10 +405,13 @@ function calcularUnifamiliar() {
     let dot = getDotacionTabla7(area);
     let total = dot * cant;
     let titulo = `Unifamiliar - ${cant} Parcela(s) de ${area} m²`;
+
+    let normaUni = `Gaceta 4044 (Art 109 c.1 / Tabla 7). Dotación correspondiente a parcelas unifamiliares con área de ${area} m2.`;
+
     showResult(total, `<span style="color:var(--accent-cyan); font-weight:bold;">DESGLOSE:</span><br><br>
         🔹 Área Parcela: <span class="res-highlight">${area} m²</span><br>
         🔹 Tabla 7 Gaceta 4044: <span class="res-highlight">${formatNumber(dot)} L/d</span> por parcela<br>
-        🔹 Cantidad de Parcelas (Casas): <span class="res-highlight">${cant}</span>`, titulo);
+        🔹 Cantidad de Parcelas (Casas): <span class="res-highlight">${cant}</span>`, titulo, "Unifamiliar", normaUni);
 }
 
 function calcularOtros() {
@@ -386,7 +451,7 @@ function calcularOtros() {
         🔹 Cantidad Inmuebles: <span class="res-highlight">${cantEdificios}</span><br>
         🔹 Sub-total (Sin riego): <span class="res-highlight">${formatNumber(consumoTotalEdificios)} L/d</span><br>
         <hr style="border-color: rgba(255,255,255,0.1)">
-        🔹 Riego Jardines (${porcExtra}%): <span class="res-highlight">${formatNumber(riego)} L/d</span>`, titulo);
+        🔹 Riego Jardines (${porcExtra}%): <span class="res-highlight">${formatNumber(riego)} L/d</span>`, titulo, "Otros Usos", `Gaceta 4044 (Articulos / Tablas). Dotación Específica referenciada para: ${descTipo}`);
 }
 
 // ------------------------
@@ -417,6 +482,39 @@ document.addEventListener('DOMContentLoaded', () => {
         selectOtros.addEventListener('change', actualizarLabelOtros);
         actualizarLabelOtros(); // initial set
     }
+
+    // Permitir deslizar tabs con el ratón en PC
+    const slider = document.querySelector('.nav-tabs');
+    if (slider) {
+        let isDown = false;
+        let startX;
+        let scrollLeft;
+
+        slider.addEventListener('mousedown', (e) => {
+            isDown = true;
+            slider.style.cursor = 'grabbing';
+            startX = e.pageX - slider.offsetLeft;
+            scrollLeft = slider.scrollLeft;
+        });
+
+        slider.addEventListener('mouseleave', () => {
+            isDown = false;
+            slider.style.cursor = 'pointer';
+        });
+
+        slider.addEventListener('mouseup', () => {
+            isDown = false;
+            slider.style.cursor = 'pointer';
+        });
+
+        slider.addEventListener('mousemove', (e) => {
+            if (!isDown) return;
+            e.preventDefault();
+            const x = e.pageX - slider.offsetLeft;
+            const walk = (x - startX) * 2; // velocidad
+            slider.scrollLeft = scrollLeft - walk;
+        });
+    }
 });
 
 function actualizarLabelOtros() {
@@ -429,39 +527,59 @@ function actualizarLabelOtros() {
 }
 
 function calcularPerCapita() {
-    const pob = getVal('poblacion-base');
-    const dot = getVal('dotacion-per-capita');
+    let base = getVal('poblacion-base');
+    let dot = getVal('dotacion-per-capita');
 
-    if (pob <= 0 || dot <= 0) {
-        alert("Ingrese la población y la dotación mayores a 0.");
+    if (base <= 0 || dot <= 0) {
+        alert("Ingrese la población proyectada y una dotación válida.");
         return;
     }
 
-    const total = pob * dot;
-    showResult(total, `<span style="color:var(--accent-cyan); font-weight:bold;">MÉTODO PER CÁPITA:</span><br><br>
-        🔹 Población: <span class="res-highlight">${formatNumber(pob)} hab</span><br>
-        🔹 Dotación: <span class="res-highlight">${formatNumber(dot)} L/hab/d</span><br>
-        <hr style="border-color: rgba(255,255,255,0.1)">
-        🔹 Total Demanda: <span class="res-highlight">${formatNumber(total)} L/d</span>`, `Método Per Cápita (${formatNumber(pob)} hab)`);
+    let total = base * dot;
+    let normaPer = `Cálculo Per Cápita General basado en población proyectada.`;
+    showResult(total, `<span style="color:var(--accent-purple); font-weight:bold;">DEMANDA PER CÁPITA:</span><br><br>
+        🔹 Población Evaluada: <span class="res-highlight">${formatNumber(base)} hab.</span><br>
+        🔹 Dotación Asignada: <span class="res-highlight">${dot} L/hab/día</span>`, `Per Cápita - ${base} hab.`, "Global Per Cápita", normaPer);
 }
 
 // ------------------------
-// LÓGICA DE REPORTE Y TOTALIZADOR
+// MODAL Y REPORTES
 // ------------------------
 
-function agregarAlReporte() {
+function abrirModalEdicion() {
+    if (!tempResult) return;
+    document.getElementById('edit-titulo').value = tempResult.titulo;
+    document.getElementById('edit-norma').value = tempResult.normativa;
+
+    const modal = document.getElementById('edit-modal');
+    modal.style.display = 'block';
+}
+
+function cerrarModalEdicion() {
+    document.getElementById('edit-modal').style.display = 'none';
+}
+
+function guardarAlReporteDesdeModal() {
     if (tempResult) {
+        const nuevoTit = document.getElementById('edit-titulo').value;
+        const nuevaNorma = document.getElementById('edit-norma').value;
+
+        tempResult.titulo = nuevoTit || tempResult.titulo;
+        tempResult.normativa = nuevaNorma || tempResult.normativa;
+
         AppState.reporteItems.push({ ...tempResult });
         actualizarTablaReporte();
+        cerrarModalEdicion();
         cerrarResultados();
 
         // Efecto visual flash
-        const reporteTab = document.querySelector('.nav-item[onclick="openTab(\\\'reporte\\\')"]');
+        const reporteTab = document.querySelector('.nav-item[onclick="openTab(\'reporte\')"]');
         if (reporteTab) {
+            const orgBg = reporteTab.style.background;
             reporteTab.style.background = "var(--success)";
             reporteTab.style.color = "white";
             setTimeout(() => {
-                reporteTab.style.background = "";
+                reporteTab.style.background = orgBg;
                 reporteTab.style.color = "";
             }, 600);
         }
@@ -470,32 +588,81 @@ function agregarAlReporte() {
 
 function actualizarTablaReporte() {
     const tbody = document.getElementById('tabla-reporte');
+    const proyContainer = document.getElementById('reporte-proyeccion-container');
+
+    // Manejar Visibilidad del Resumen de Proyección (Top)
+    if (AppState.proyeccion) {
+        proyContainer.style.display = 'block';
+        document.getElementById('rep-proy-base').innerText = AppState.proyeccion.censoBase;
+        document.getElementById('rep-proy-tf').innerText = AppState.proyeccion.tf;
+        document.getElementById('rep-proy-resultado').innerText = AppState.proyeccion.resultado;
+        document.getElementById('rep-proy-metodo').innerText = AppState.proyeccion.metodo;
+        if (AppState.proyeccion.chartImg) {
+            document.getElementById('rep-proy-chart').src = AppState.proyeccion.chartImg;
+        }
+    } else {
+        proyContainer.style.display = 'none';
+    }
+
     tbody.innerHTML = '';
     let granTotal = 0;
 
     if (AppState.reporteItems.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="4" style="padding: 20px; text-align: center; color: var(--text-secondary);">Aún no hay cálculos agregados al reporte. Utiliza las otras pestañas para calcular y agregar demandadas.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="4" style="padding: 20px; text-align: center; color: var(--text-secondary);">Aún no hay cálculos volumétricos de dotación en el reporte.</td></tr>`;
         document.getElementById('gran-total-ld').innerText = "0.00";
         document.getElementById('gran-total-ls').innerText = "0.00";
         return;
     }
 
+    // Agrupar por Categorías
+    const agrupado = {};
     AppState.reporteItems.forEach((item, index) => {
-        granTotal += item.total;
-        const caudalLs = item.total / 86400;
-
-        const tr = document.createElement('tr');
-        tr.style.borderBottom = "1px solid rgba(255,255,255,0.05)";
-        tr.innerHTML = `
-            <td style="padding: 12px 10px;">${item.titulo}</td>
-            <td style="padding: 12px 10px; text-align: right; color: white; font-weight: 600;">${formatNumber(item.total)}</td>
-            <td style="padding: 12px 10px; text-align: right; color: white;">${formatNumber(caudalLs)}</td>
-            <td style="padding: 12px 10px; text-align: center;">
-                <button onclick="eliminarDelReporte(${index})" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; border-radius: 4px; padding: 4px 10px; cursor: pointer;">✕</button>
-            </td>
-        `;
-        tbody.appendChild(tr);
+        if (!agrupado[item.categoria]) agrupado[item.categoria] = [];
+        agrupado[item.categoria].push({ index: index, data: item });
     });
+
+    for (const cat in agrupado) {
+        // Cabecera Categoría
+        const trHeader = document.createElement('tr');
+        trHeader.style.background = "var(--tab-bg)";
+        trHeader.innerHTML = `<td colspan="4" style="padding: 10px; font-weight: bold; color: var(--accent-blue); font-size: 1.1rem; border-bottom: 2px solid var(--glass-border); text-transform: uppercase;">📂 ${cat}</td>`;
+        tbody.appendChild(trHeader);
+
+        let subtotal = 0;
+
+        agrupado[cat].forEach(nodo => {
+            const item = nodo.data;
+            const idx = nodo.index;
+            subtotal += item.total;
+            granTotal += item.total;
+            const caudalLs = item.total / 86400;
+
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = "1px solid var(--glass-border)";
+            tr.innerHTML = `
+                <td style="padding: 12px 10px;">
+                    <div style="font-weight: 600; font-size: 1.05rem; color: var(--accent-cyan);">${item.titulo}</div>
+                    <div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 5px; font-style: italic;">📋 ${item.normativa}</div>
+                </td>
+                <td style="padding: 12px 10px; text-align: right; color: var(--text-primary); font-weight: 600; font-size: 1.1rem;">${formatNumber(item.total)}</td>
+                <td style="padding: 12px 10px; text-align: right; color: var(--text-primary);">${formatNumber(caudalLs)}</td>
+                <td style="padding: 12px 10px; text-align: center;">
+                    <button onclick="eliminarDelReporte(${idx})" style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; border-radius: 4px; padding: 6px 12px; cursor: pointer; transition: 0.2s;">✕</button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        // Subtotal Foot
+        const trSub = document.createElement('tr');
+        trSub.innerHTML = `
+            <td style="padding: 10px; text-align: right; color: var(--text-secondary); font-size: 0.9rem;">Subtotal Categoría:</td>
+            <td style="padding: 10px; text-align: right; color: var(--text-secondary); font-weight: bold;">${formatNumber(subtotal)} L/d</td>
+            <td style="padding: 10px; text-align: right; color: var(--text-secondary);">${formatNumber(subtotal / 86400)} L/s</td>
+            <td></td>
+        `;
+        tbody.appendChild(trSub);
+    }
 
     document.getElementById('gran-total-ld').innerText = formatNumber(granTotal);
     document.getElementById('gran-total-ls').innerText = formatNumber(granTotal / 86400);
@@ -507,14 +674,15 @@ function eliminarDelReporte(index) {
 }
 
 function limpiarReporte() {
-    if (confirm("¿Estás seguro de limpiar toda la data del reporte actual?")) {
+    if (confirm("¿Estás seguro de limpiar toda la data del reporte actual (Incluyendo la Proyección)?")) {
         AppState.reporteItems = [];
+        AppState.proyeccion = null;
         actualizarTablaReporte();
     }
 }
 
 function imprimirReporte() {
-    if (AppState.reporteItems.length === 0) {
+    if (AppState.reporteItems.length === 0 && !AppState.proyeccion) {
         alert("El reporte está vacío.");
         return;
     }
@@ -523,3 +691,22 @@ function imprimirReporte() {
         window.print();
     }, 500);
 }
+
+// ------------------------
+// THEME SWITCHER
+// ------------------------
+function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('app-theme', theme);
+
+    // Update active button state
+    document.querySelectorAll('.theme-btn').forEach(btn => btn.classList.remove('active'));
+    const activeBtn = document.getElementById(`btn-${theme}`);
+    if (activeBtn) activeBtn.classList.add('active');
+}
+
+// Load saved theme on load
+document.addEventListener('DOMContentLoaded', () => {
+    const savedTheme = localStorage.getItem('app-theme') || 'tokio';
+    setTheme(savedTheme);
+});

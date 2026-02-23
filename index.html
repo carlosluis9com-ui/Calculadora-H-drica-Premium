@@ -21,6 +21,14 @@
 
     <div class="container glass-panel">
         <header>
+            <div class="theme-switcher">
+                <div class="theme-toggle">✨</div>
+                <div class="theme-menu">
+                    <button class="theme-btn" onclick="setTheme('claro')" id="btn-claro">☀️ Claro</button>
+                    <button class="theme-btn" onclick="setTheme('oscuro')" id="btn-oscuro">🌙 Mate</button>
+                    <button class="theme-btn active" onclick="setTheme('tokio')" id="btn-tokio">🌸 Tokio</button>
+                </div>
+            </div>
             <h1>💧 Calculadora Hídrica Premium</h1>
             <p>Proyección Poblacional & Dotaciones (Gaceta 4044)</p>
         </header>
@@ -106,6 +114,10 @@
                 <div class="chart-container mt-4">
                     <canvas id="projectionChart" width="400" height="200"></canvas>
                 </div>
+
+                <button class="btn-primary mt-4" id="btn-add-proy-reporte" onclick="agregarProyeccionAlReporte()"
+                    style="background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%); width: 100%;">➕
+                    Agregar este Resumen al Reporte</button>
             </div>
         </div>
 
@@ -213,7 +225,8 @@
             <div class="card glass-panel-inner mt-4">
                 <label>🌳 Porcentaje de Área Verde / Jardines (%):</label>
                 <input type="number" id="multi_jardin" placeholder="Ej: 10">
-                <div class="info-text mt-2">Corresponde a la dotación de riego (2 L/dia/m²) en base al área de parcela.
+                <div class="info-text mt-2">Corresponde a la dotación de riego (2 L/dia/m²) en base al área de
+                    parcela.
                 </div>
             </div>
 
@@ -280,23 +293,28 @@
                     <label>Seleccione el Tipo (Destino):</label>
                     <select id="otros_tipo">
                         <optgroup label="Art. 110 - Asistenciales">
-                            <option value="hosp_cama" data-dot="800" data-unit="Camas">Hospitalización (800 L/d/cama)
+                            <option value="hosp_cama" data-dot="800" data-unit="Camas">Hospitalización (800
+                                L/d/cama)
                             </option>
                             <option value="hosp_cons" data-dot="500" data-unit="Consultorios">Consulta Externa (500
                                 L/d/consl.)</option>
-                            <option value="dental" data-dot="1000" data-unit="Unidades Dent.">Clínicas Dentales (1000
+                            <option value="dental" data-dot="1000" data-unit="Unidades Dent.">Clínicas Dentales
+                                (1000
                                 L/d/unidad)</option>
                         </optgroup>
                         <optgroup label="Art. 110 - Educacionales">
-                            <option value="edu_ext" data-dot="40" data-unit="Alumnos">Alumnado Externo (40 L/d/alum.)
+                            <option value="edu_ext" data-dot="40" data-unit="Alumnos">Alumnado Externo (40
+                                L/d/alum.)
                             </option>
                             <option value="edu_semi" data-dot="70" data-unit="Alumnos">Alumnado Semi-interno (70
                                 L/d/alum.)</option>
-                            <option value="edu_int" data-dot="200" data-unit="Alumnos">Alumnado Interno/Residente (200
+                            <option value="edu_int" data-dot="200" data-unit="Alumnos">Alumnado Interno/Residente
+                                (200
                                 L/d/alum.)</option>
                             <option value="edu_pers_res" data-dot="200" data-unit="Personas">Personal Residente (200
                                 L/d/pers.)</option>
-                            <option value="edu_pers_no_res" data-dot="50" data-unit="Personas">Personal No Residente (50
+                            <option value="edu_pers_no_res" data-dot="50" data-unit="Personas">Personal No Residente
+                                (50
                                 L/d/pers.)</option>
                         </optgroup>
                         <optgroup label="Art. 110 - Instituciones Varias">
@@ -304,76 +322,97 @@
                             </option>
                             <option value="carceles" data-dot="200" data-unit="Personas">Cárceles (200 L/d/pers.)
                             </option>
-                            <option value="iglesias" data-dot="0.5" data-unit="m² Neto">Iglesias (0.5 L/d/m²)</option>
-                            <option value="oficinas_pub" data-dot="6" data-unit="m² Local">Oficinas Públicas/Grales (6
+                            <option value="iglesias" data-dot="0.5" data-unit="m² Neto">Iglesias (0.5 L/d/m²)
+                            </option>
+                            <option value="oficinas_pub" data-dot="6" data-unit="m² Local">Oficinas Públicas/Grales
+                                (6
                                 L/d/m²)</option>
                         </optgroup>
                         <optgroup label="Art. 111 - Comercios y Anexos">
-                            <option value="deposito" data-dot="0.5" data-unit="m² Útil">Depósitos/Almacenes (0.5 L/d/m²
+                            <option value="deposito" data-dot="0.5" data-unit="m² Útil">Depósitos/Almacenes (0.5
+                                L/d/m²
                                 por turno)</option>
-                            <option value="mercado" data-dot="15" data-unit="m² Ventas">Mercados (15 L/d/m²)</option>
-                            <option value="carniceria" data-dot="25" data-unit="m² Ventas">Carnicerías/Pescaderías (25
+                            <option value="mercado" data-dot="15" data-unit="m² Ventas">Mercados (15 L/d/m²)
+                            </option>
+                            <option value="carniceria" data-dot="25" data-unit="m² Ventas">Carnicerías/Pescaderías
+                                (25
                                 L/d/m²)</option>
-                            <option value="super" data-dot="20" data-unit="m² Ventas">Supermercados/Tiendas (20 L/d/m²)
+                            <option value="super" data-dot="20" data-unit="m² Ventas">Supermercados/Tiendas (20
+                                L/d/m²)
                             </option>
                             <option value="rest" data-dot="50" data-unit="m² Útil">Restaurantes (50 L/d/m²)</option>
                             <option value="bar" data-dot="60" data-unit="m² Útil">Bares/Fuentes soda (60 L/d/m²)
                             </option>
                             <option value="cc" data-dot="10" data-unit="m² Bruto">Centros Comerciales (10 L/d/m² m.
                                 bruto)</option>
-                            <option value="hotel" data-dot="500" data-unit="Dormitorios">Hoteles/Moteles (500 L/d/dorm.)
+                            <option value="hotel" data-dot="500" data-unit="Dormitorios">Hoteles/Moteles (500
+                                L/d/dorm.)
                             </option>
                             <option value="pension" data-dot="350" data-unit="Dormitorios">Pensiones (350 L/d/dorm.)
                             </option>
-                            <option value="hospedaje" data-dot="25" data-unit="m² Dormitorios">Hospedajes Generales (25
+                            <option value="hospedaje" data-dot="25" data-unit="m² Dormitorios">Hospedajes Generales
+                                (25
                                 L/d/m²)</option>
-                            <option value="lavanderia_ropa" data-dot="40" data-unit="Kg Ropa">Lavanderías Generales (40
+                            <option value="lavanderia_ropa" data-dot="40" data-unit="Kg Ropa">Lavanderías Generales
+                                (40
                                 L/d/kilo)</option>
-                            <option value="lavanderia_seco" data-dot="30" data-unit="Kg Ropa">Lavanderías al Seco (30
+                            <option value="lavanderia_seco" data-dot="30" data-unit="Kg Ropa">Lavanderías al Seco
+                                (30
                                 L/d/kilo)</option>
                             <option value="estacionamiento" data-dot="2" data-unit="m² Cubierto">Estacionamientos
                                 Cubiertos (2 L/d/m²)</option>
                             <option value="ob_bomba" data-dot="300" data-unit="Bombas">Bombas de Gasolina (300
                                 L/d/bomba)</option>
-                            <option value="lavado_man" data-dot="8000" data-unit="Equipos">Lavado Vehículos Manual (8000
+                            <option value="lavado_man" data-dot="8000" data-unit="Equipos">Lavado Vehículos Manual
+                                (8000
                                 L/d/eq.)</option>
-                            <option value="lavado_auto" data-dot="12800" data-unit="Equipos">Lavado Vehículos Automático
+                            <option value="lavado_auto" data-dot="12800" data-unit="Equipos">Lavado Vehículos
+                                Automático
                                 (12800 L/d/eq.)</option>
                         </optgroup>
                         <optgroup label="Art. 112 - Industrias">
-                            <option value="ind_trab" data-dot="80" data-unit="Trabajadores">Personal Industrial (80 L/d
+                            <option value="ind_trab" data-dot="80" data-unit="Trabajadores">Personal Industrial (80
+                                L/d
                                 por trabajador/turno)</option>
                         </optgroup>
                         <optgroup label="Tabla 9 - Recreacional y Deportivo">
                             <option value="cines" data-dot="3" data-unit="Asientos">Cines/Teatros/Auditorios (3
                                 L/d/asiento)</option>
-                            <option value="estadios" data-dot="3" data-unit="Espectadores">Estadios/Circos/Plaza Toros
+                            <option value="estadios" data-dot="3" data-unit="Espectadores">Estadios/Circos/Plaza
+                                Toros
                                 (3 L/d/espectador)</option>
-                            <option value="cabaret" data-dot="30" data-unit="m² Neto">Discotecas/Salas Baile (30 L/d/m²)
+                            <option value="cabaret" data-dot="30" data-unit="m² Neto">Discotecas/Salas Baile (30
+                                L/d/m²)
                             </option>
                             <option value="parque" data-dot="0.25" data-unit="m²">Parques (0.25 L/d/m²)</option>
                             <option value="piscina_re" data-dot="10" data-unit="m² Proy. Horiz.">Piscinas
                                 c/recirculación (10 L/d/m²)</option>
                             <option value="piscina_no" data-dot="25" data-unit="m² Proy. Horiz.">Piscinas
                                 s/recirculación (25 L/d/m²)</option>
-                            <option value="piscina_flujo" data-dot="125" data-unit="m² Proy. Horiz.">Piscinas c/flujo
+                            <option value="piscina_flujo" data-dot="125" data-unit="m² Proy. Horiz.">Piscinas
+                                c/flujo
                                 continuo (125 L/d/m²)</option>
                             <option value="balneario" data-dot="50" data-unit="Usuarios">Balnearios (50 L/d/usuario)
                             </option>
-                            <option value="gimnasio" data-dot="10" data-unit="m² Neto">Gimnasios (10 L/d/m²)</option>
-                            <option value="vestuarios" data-dot="30" data-unit="m² Proy. Horiz.">Vestuarios Piscina (30
+                            <option value="gimnasio" data-dot="10" data-unit="m² Neto">Gimnasios (10 L/d/m²)
+                            </option>
+                            <option value="vestuarios" data-dot="30" data-unit="m² Proy. Horiz.">Vestuarios Piscina
+                                (30
                                 L/d/m² piscina)</option>
                         </optgroup>
                         <optgroup label="Tabla 10 - Animales (Granjas/Alojamientos)">
-                            <option value="lechero" data-dot="120" data-unit="Animales">Ganado Lechero (120 L/d/animal)
+                            <option value="lechero" data-dot="120" data-unit="Animales">Ganado Lechero (120
+                                L/d/animal)
                             </option>
-                            <option value="bovino" data-dot="40" data-unit="Animales">Bovinos / Equinos (40 L/d/animal)
+                            <option value="bovino" data-dot="40" data-unit="Animales">Bovinos / Equinos (40
+                                L/d/animal)
                             </option>
                             <option value="ovino" data-dot="10" data-unit="Animales">Ovinos / Porc. Rejilla (10
                                 L/d/animal)</option>
                             <option value="porcino_norm" data-dot="30" data-unit="Animales">Porcinos Normal (10-30
                                 L/d/animal)</option>
-                            <option value="aves" data-dot="20" data-unit="Cientos (Lotes de 100)">Aves (20 L/d por cada
+                            <option value="aves" data-dot="20" data-unit="Cientos (Lotes de 100)">Aves (20 L/d por
+                                cada
                                 100 aves)</option>
                         </optgroup>
                     </select>
@@ -406,32 +445,53 @@
         <!-- TAB 6: REPORTE -->
         <div id="reporte" class="section fade-in" style="display: none;">
             <h2>📋 Reporte y Sumatoria Total</h2>
-            <div class="info-text">Resumen de todas las dotaciones calculadas. El sistema sumará automáticamente el Gran
+            <div class="info-text">Resumen de todas las dotaciones calculadas. El sistema sumará automáticamente el
+                Gran
                 Total para hallar el Caudal Medio del macro-proyecto completo.</div>
+
+            <!-- Contenedor Resumen de Proyección -->
+            <div id="reporte-proyeccion-container" class="card glass-panel-inner mt-4" style="display: none;">
+                <h3
+                    style="color: var(--accent-purple); border-bottom: 1px solid var(--glass-border); padding-bottom: 10px; margin-bottom: 15px;">
+                    📊 Resumen de Proyección Poblacional</h3>
+                <p style="margin-bottom: 8px;"><strong>📚 Censos Base:</strong> <span id="rep-proy-base"
+                        style="color: var(--text-secondary);"></span></p>
+                <p style="margin-bottom: 8px;"><strong>🔮 Proyección al <span id="rep-proy-tf"></span>
+                        (Resultado):</strong> <span id="rep-proy-resultado" class="res-highlight"
+                        style="font-size: 1.2em;"></span></p>
+                <p style="margin-bottom: 8px;"><strong>📐 Método Seleccionado:</strong> <span id="rep-proy-metodo"
+                        style="color: var(--text-secondary);"></span></p>
+
+                <div class="chart-container mt-4" style="padding: 10px; text-align: center;">
+                    <img id="rep-proy-chart" src="" style="max-width: 100%; height: auto; border-radius: 8px;">
+                </div>
+
+                <button class="btn-primary mt-3" onclick="eliminarProyeccionReporte()"
+                    style="background: rgba(239, 68, 68, 0.2); border: 1px solid rgba(239, 68, 68, 0.4); color: #fca5a5; padding: 6px 15px; font-size: 0.9rem; box-shadow: none;">✕
+                    Remover Proyección del Reporte</button>
+            </div>
 
             <div class="card glass-panel-inner mt-4">
                 <div style="overflow-x: auto;">
-                    <table style="width: 100%; border-collapse: collapse; color: white; min-width: 600px;">
+                    <table
+                        style="width: 100%; border-collapse: collapse; color: var(--text-primary); min-width: 600px;">
                         <thead>
                             <tr style="border-bottom: 1px solid var(--glass-border);">
-                                <th style="padding: 12px; text-align: left;">Descripción de Edificación</th>
+                                <th style="padding: 12px; text-align: left; width: 50%;">Descripción y Normativa
+                                </th>
                                 <th style="padding: 12px; text-align: right;">Dotación (L/día)</th>
-                                <th style="padding: 12px; text-align: right;">Caudal Medio (L/s)</th>
+                                <th style="padding: 12px; text-align: right;">Qmed (L/s)</th>
                                 <th style="padding: 12px; text-align: center;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="tabla-reporte">
-                            <tr>
-                                <td colspan="4"
-                                    style="padding: 20px; text-align: center; color: var(--text-secondary);">Aún no hay
-                                    cálculos agregados al reporte. Utiliza las otras pestañas para calcular y agregar
-                                    demandadas.</td>
-                            </tr>
+                            <!-- El JS inyectará categorías y filas dinámicamente -->
                         </tbody>
                         <tfoot>
                             <tr
                                 style="border-top: 2px solid var(--accent-cyan); font-weight: bold; background: rgba(6, 182, 212, 0.1);">
-                                <td style="padding: 15px 12px; text-align: right; color: var(--accent-cyan);">GRAN TOTAL
+                                <td style="padding: 15px 12px; text-align: right; color: var(--accent-cyan);">GRAN
+                                    TOTAL
                                     (Caudal Medio):</td>
                                 <td id="gran-total-ld"
                                     style="padding: 15px 12px; text-align: right; color: var(--accent-cyan); font-size: 1.2rem;">
@@ -467,8 +527,42 @@
             <div class="res-value" id="res_dia">0 L/día</div>
             <div class="res-secondary" id="res_seg">0.00 L/s (Qm)</div>
             <div class="res-breakdown" id="res_detalle">...</div>
-            <button id="btn-add-reporte" class="btn-primary mt-4" onclick="agregarAlReporte()">➕ Agregar al Reporte
+            <button id="btn-add-reporte" class="btn-primary mt-4" onclick="abrirModalEdicion()">➕ Agregar al Reporte
                 General</button>
+        </div>
+    </div>
+
+    <!-- MODAL DE EDICIÓN PRE-GUARDA -->
+    <div id="edit-modal" class="result-floating fade-in"
+        style="display: none; bottom: 50%; transform: translate(-50%, 50%); z-index: 1050;">
+        <div class="header-res" style="background: var(--accent-purple); border-bottom: none;">
+            <h3 style="color: white;">✏️ Confirmar Datos del Reporte</h3>
+            <span class="close-res" onclick="cerrarModalEdicion()">×</span>
+        </div>
+        <div class="res-body" style="padding: 20px;">
+            <div class="form-group" style="text-align: left;">
+                <label style="color: var(--text-primary); margin-bottom: 8px;">Título / Descripción de la
+                    Edificación:</label>
+                <input type="text" id="edit-titulo"
+                    style="background: var(--input-bg); color: var(--text-primary); border: 1px solid var(--accent-purple);"
+                    value="">
+            </div>
+
+            <div class="form-group" style="text-align: left; margin-top: 15px;">
+                <label style="color: var(--text-primary); margin-bottom: 8px;">Normativa Aplicada
+                    (Automática):</label>
+                <textarea id="edit-norma" rows="2"
+                    style="width: 100%; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--glass-border); border-radius: 8px; color: var(--text-secondary); font-family: inherit; resize: none;"
+                    readonly></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn-primary" onclick="cerrarModalEdicion()"
+                    style="background: transparent; border: 1px solid var(--glass-border); color: var(--text-primary); box-shadow: none;">Cancelar</button>
+                <button class="btn-primary" onclick="guardarAlReporteDesdeModal()"
+                    style="background: linear-gradient(135deg, var(--accent-purple) 0%, var(--accent-blue) 100%);">💾
+                    Guardar Cambios</button>
+            </div>
         </div>
     </div>
 
