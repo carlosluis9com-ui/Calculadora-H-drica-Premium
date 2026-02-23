@@ -241,27 +241,25 @@ function calcularMultifamiliar() {
         let dotUnit = getDotacionTabla8(habs);
         let consumoCentral = dotUnit * aptos * pisos * edificios * parcelas;
 
-        // Jardines Automáticos por Parcela al 10%
-        let areaVerde = area * 0.10;
+        // Jardines Automáticos por Parcela al % ingresado
+        let porcExtra = getVal('multi_jardin') || 0;
+        let areaVerde = area * (porcExtra / 100);
         let riegoParcela = areaVerde * 2;
         let riegoAutom = riegoParcela * parcelas;
 
-        total = consumoCentral + riegoAutom + extraValue;
+        total = consumoCentral + riegoAutom;
         titulo = `Multifamiliar Exacto - ${parcelas} parcelas de ${area} m²`;
         detalle = `
             <span style="color:var(--accent-cyan); font-weight:bold;">EDIFICACIONES:</span><br><br>
             🔹 ${formatNumber(dotUnit)} L/d x ${aptos} apto. x ${pisos} pisos x ${edificios} edificios x ${parcelas} parcelas = <span class="res-highlight" style="background-color: var(--accent-cyan); color: #000; padding: 2px 6px; border-radius: 4px;">${formatNumber(consumoCentral)} L/d</span><br>
             <hr style="border-color: rgba(255,255,255,0.1)">
-            <span style="color:var(--accent-cyan); font-weight:bold;">JARDINES (10% de Parcela):</span><br><br>
-            🔹 ${formatNumber(area)} m² x 0.10 = ${formatNumber(areaVerde)} m² x 2 L/d/m² = ${formatNumber(riegoParcela)} L/d<br>
+            <span style="color:var(--accent-cyan); font-weight:bold;">JARDINES (${porcExtra}% de Parcela):</span><br><br>
+            🔹 ${formatNumber(area)} m² x ${formatNumber(porcExtra / 100)} = ${formatNumber(areaVerde)} m² x 2 L/d/m² = ${formatNumber(riegoParcela)} L/d<br>
             🔹 ${formatNumber(riegoParcela)} L/d x ${parcelas} parcelas = <span class="res-highlight" style="background-color: #00ff73; color: #000; padding: 2px 6px; border-radius: 4px;">${formatNumber(riegoAutom)} L/d</span>`;
-
-        if (porcExtra > 0) {
-            detalle += `<br><br>🔹 <i>*Riego Manual Adicional (Global): +${porcExtra}% = <span class="res-highlight">${formatNumber(extraValue)} L/d</span></i>`;
-        }
 
     } else {
         // MÉT. ESTIMADO (K)
+        let porcExtra = getVal('multi_jardin') || 0;
         let areaParcela = getVal('ms_area_parcela');
         let areaConst = getVal('ms_area_const');
         let cantParcelas = getVal('ms_cant_parcelas') || 1;
